@@ -1,35 +1,102 @@
-# file to define the type for variables. in code i can have the variables be a seperate object
-# or i can have the divisions be seperate objects.
-# like global_state, actor_state, stuff like that.
-
-
-# each function call that needs parameters will pass a config dictionary, that 
-# will query which parameters it requires.
-# code needed: functions to convert parameters to a good state(numpy)
-# functions to report the required the parameters
-# classes to inherit 
-class StateHolder:
-    def __init__(self, parameters_init={}):
-        self.parameters = {
-            "",
-            "",
-            "",
-
-        }
-
-        self.update_parameters(parameters_init)
-        
-    def update_parameters(self, parameters_update):
-        for key in parameters_update:
-            self.parameters[key] = parameters_update[key]
-
-        
-
-class GlobalState(StateHolder):
-    def __init__(self, parameters_init_={}):
-        super().__init__()
-        self.parameters = {
-            "","",""
-        }
-
+class ActorVariables:
+    def __init__(self, init=None):
+        self.variable_names = []
+        if init:
+            self.update_values(init)
     
+    def dictify(self):
+        k = {}
+        for name in self.variable_names:
+            k[name] = getattr(self, name)
+        return k
+
+
+    def update_values(self, values_new):
+        for name in self.variable_names:
+            setattr(self, name, values_new)
+
+
+class StudentVariables(ActorVariables):
+    def __init__(self, init=None):
+        super().__init__(init)
+        self.name = "Student"
+
+        self.performance = 0
+        self.happiness = 0
+        self.fatigue = 0
+        self.motivation = 0
+        self.attendance_rate = 0
+        self.social_engagement = 0
+        self.extracurriculur_engagement = 0
+
+        self.variable_names = ["performance", "happiness", "fatigue", "motivation", "attendance_rate", "social_engagement", "extracurriculur_engagement"]
+        if init:
+            self.update_values(init)
+
+class ProfessorVariables(ActorVariables):
+    def __init__(self, init=None):
+        super().__init__(init)
+        self.name = "Professor"
+
+        self.teaching_quality = 0
+        self.morale = 0
+        self.workload = 0
+        self.experience = 0
+        self.job_satisfaction = 0
+
+        self.variable_names = [
+            "teaching_quality",
+            "morale",
+            "workload",
+            "experience",
+            "job_satisfaction"
+        ]
+
+        if init:
+            self.update_values(init)
+
+
+class ClubsVariables(ActorVariables):
+    def __init__(self, init=None):
+        super().__init__(init)
+        self.name = "Club"
+
+        self.member_count = 0
+        self.activity_level = 0
+        self.popularity = 0
+        self.funding = 0
+        self.organizational_skill = 0
+
+        self.variable_names = [
+            "member_count",
+            "activity_level",
+            "popularity",
+            "funding",
+            "organizational_skill"
+        ]
+
+        if init:
+            self.update_values(init)
+
+
+class AdministrationVariables(ActorVariables):
+    def __init__(self, init=None):
+        super().__init__(init)
+        self.name = "Admin"
+
+        self.efficiency = 0
+        self.stress_level = 0
+        self.communication_skill = 0
+        self.problem_solving = 0
+        self.leadership = 0
+
+        self.variable_names = [
+            "efficiency",
+            "stress_level",
+            "communication_skill",
+            "problem_solving",
+            "leadership"
+        ]
+
+        if init:
+            self.update_values(init)
