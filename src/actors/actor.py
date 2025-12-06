@@ -20,9 +20,9 @@ class BaseActor:
         self.actions_history.append(action)
 
         for k in update:
-            print(k, "JAA")
-            print(k, update[k], self.variables.variable_names)
-            setattr(self.variables, k, update[k])
+            nk = k.strip()
+
+            setattr(self.variables, nk, update[k])
 
 
 

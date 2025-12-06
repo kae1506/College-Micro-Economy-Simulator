@@ -23,5 +23,5 @@ class Student(BaseActor):
             "socialize",
             "seek_help",
             "skip_day",
-            "attend_extracurriculur"
+            "attend_extracurricular"
         ] if actions_init is None else actions_init

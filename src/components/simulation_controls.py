@@ -1,97 +1,114 @@
+# src/components/simulation_controls.py
 import streamlit as st
 import time
 import os
 
+
+DATA_DIR = "/Users/keshava/Documents/micro-economy-simulator/data"  # same path you used
+
+
 def render_simulation_controls(world, policy_updates):
     st.subheader("Simulation Controls")
+    st.caption("Run, reset, save, or load simulations.")
 
+    # Ensure flags exist
     for key in ("show_save_input", "show_load_input"):
         if key not in st.session_state:
             st.session_state[key] = False
-    
-    col1, col2, col3, col4, col5 = st.columns(5)
 
-    if col1.button("Run 1 Step"):
-        print("ENTER ENTER ENTER")
+    # Main control deck
+    with st.container(border=True):
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown("**Run**")
+            run_1 = st.button("Run 1 step", use_container_width=True)
+            run_10 = st.button("Run 5 steps", use_container_width=True)
+
+        with col2:
+            st.markdown("**State**")
+            reset = st.button("Reset simulation", use_container_width=True)
+
+        with col3:
+            st.markdown("**Persistence**")
+            save = st.button("Save data", use_container_width=True)
+            load = st.button("Load data", use_container_width=True)
+
+    # --- Actions ---
+
+    if run_1:
         world.step(policy_updates)
         st.session_state.world = world
-        st.rerun()              
+        st.toast("Ran 1 step ✅")
+        st.rerun()
 
-    if col2.button("Run 10 Steps"):
-        for _ in range(10):
+    if run_10:
+        for _ in range(5):
             world.step(policy_updates)
-            time.sleep(0.05)
             st.session_state.world = world
+        st.toast("Ran 5 steps ✅")
+        st.rerun()
 
-            st.rerun()
-
-    if col3.button("Reset"):
-        from world import World
+    if reset:
+        from src.world import World  # same backend class
         st.session_state.world = World()
         st.success("Simulation reset successfully!")
 
-    # create a flag in session state if not present
-    if "show_save_input" not in st.session_state:
-        st.session_state.show_save_input = False
-
-    if col4.button("Save Data"):
+    # Save popup
+    if save:
         st.session_state.show_save_input = True
 
-    # if Save clicked → show input + submit button
     if st.session_state.show_save_input:
-        st.write("### Enter filename to save data")
+        with st.container(border=True):
+            st.markdown("#### Save current simulation")
+            filename = st.text_input("Filename (without extension):", key="save_filename")
 
-        filename = st.text_input("Filename:", key="save_filename")
+            c1, c2 = st.columns([1, 1])
+            confirm = c1.button("Save")
+            cancel = c2.button("Cancel")
 
-        if st.button("Submit Save"):
-            if filename.strip() == "":
-                st.error("Filename cannot be empty!")
-            else:
-                world.save_data(filename)
-                st.success(f"Data saved as `{filename}`")
-                # reset the popup
+            if confirm:
+                if filename.strip() == "":
+                    st.error("Filename cannot be empty!")
+                else:
+                    world.save_data(filename)  # ✅ same backend call
+                    st.success(f"Data saved as `{filename}`")
+                    st.session_state.show_save_input = False
+
+            if cancel:
                 st.session_state.show_save_input = False
 
-    if col5.button("Load Data"):
+    # Load popup
+    if load:
         st.session_state.show_load_input = True
 
     if st.session_state.show_load_input:
         with st.container(border=True):
-            # st.write("### 📂 Enter filename to load data")
+            st.markdown("#### Load saved simulation")
 
-            # load_name = st.text_input("Load from:", key="load_filename")
+            if not os.path.isdir(DATA_DIR):
+                st.info(f"No data folder found at `{DATA_DIR}`.")
+                return
 
-            # if st.button("Confirm Load"):
-            #     if load_name.strip() == "":
-            #         st.error("Filename cannot be empty!")
-            #     else:
-            #         try:
-            #             world.load_data(load_name)
-            #             st.session_state.world = world
-            #             st.success(f"Data loaded from `{load_name}`")
-            #             st.session_state.show_load_input = False
-            #             st.rerun()
-            #         except FileNotFoundError:
-            #             st.error("File not found — double check the name!")
-                        
-
-
-            DATA_DIR = "/Users/keshava/Documents/micro-economy-simulator/data"  # change this to your folder path
-
-            # Get only files (not folders)
             files = [
                 f for f in os.listdir(DATA_DIR)
                 if os.path.isfile(os.path.join(DATA_DIR, f))
             ]
 
-            selected_file = st.selectbox(
-                "Load Dataset",
-                options=["None"] + files
-            )
+            if not files:
+                st.info("No saved files found yet.")
+            else:
+                selected_file = st.selectbox("Choose a file to load", options=files)
+                c1, c2 = st.columns([1, 1])
+                confirm = c1.button("Load")
+                cancel = c2.button("Cancel")
 
-            if selected_file != "None":
-                world.load_data(selected_file)
-                st.session_state.world = world
-                st.success(f"Data loaded from `{load_name}`")
-                st.session_state.show_load_input = False
-                st.rerun()
+                if confirm:
+                    world.load_data(selected_file)  # ✅ same backend call
+                    st.session_state.world = world
+                    st.success(f"Data loaded from `{selected_file}`")
+                    st.session_state.show_load_input = False
+                    st.rerun()
+
+                if cancel:
+                    st.session_state.show_load_input = False

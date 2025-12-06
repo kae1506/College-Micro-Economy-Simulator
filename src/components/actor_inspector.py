@@ -1,28 +1,36 @@
+# src/components/actor_inspector.py
 import streamlit as st
 
-def render_actor_inspector(world):
-    st.subheader("Actor Inspector")
 
-    actor_type = st.selectbox("Select Actor Type", ["Student", "Teacher", "Club", "Admin"])
+def render_actor_inspector(world):
+    st.subheader("🧍 Actor Inspector")
+    st.caption("Choose an actor and inspect its internal state and recent actions.")
+
+    actor_type = st.selectbox(
+        "Actor type",
+        ["Student", "Professor", "Club", "Admin"],
+    )
 
     try:
         actors_list = world.get_actors_of_type(actor_type)
-    except:
-        st.warning("World class missing get_actors_of_type()")
+    except Exception:
+        st.warning("World class is missing `get_actors_of_type()`.")
         return
 
-    index = st.number_input(
-        f"Select {actor_type} Index",
-        min_value=0,
-        max_value=len(actors_list) - 1,
-        step=1,
-    )
+    if not actors_list:
+        st.info(f"No {actor_type.lower()}s present in the world yet.")
+        return
 
-    actor = actors_list[int(index)]
+    # Show actors as "Student #0", "Student #1", etc. rather than raw index.
+    labels = [f"{actor_type} #{i}" for i in range(len(actors_list))]
+    selected_label = st.selectbox("Select actor", labels)
+    index = labels.index(selected_label)
+    actor = actors_list[index]
 
-    st.write("### Current State")
-    st.json(actor.__dict__)
+    with st.container(border=True):
+        st.markdown("#### 🧬 Current State")
+        st.json(actor.__dict__)
 
-    if hasattr(actor, "last_action"):
-        st.write("### Last Action")
-        st.write(actor.last_action)
+        if hasattr(actor, "last_action"):
+            st.markdown("#### 🕒 Last Action")
+            st.write(actor.last_action)

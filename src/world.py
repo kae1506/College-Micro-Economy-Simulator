@@ -110,6 +110,9 @@ class World:
         self.timestep = 0
 
 
+        # self.load_data("run1_class11_break4_exam4")
+
+
     # ----------------------------
     # Helper: safe averaging
     # ----------------------------
@@ -117,6 +120,10 @@ class World:
     def safe_avg(values):
         values = [v for v in values if isinstance(v, (int, float))]
         return sum(values) / len(values) if values else 0
+    
+
+    def get_most_common_action(self, key):
+        return self.history["dominant_actions"][key]
     
 
     def package_variables(self, glob=True, actor=True):
@@ -248,6 +255,7 @@ class World:
             self.history[f"stu_{name}"].append(self.safe_avg([getattr(s.variables, name) for s in self.students]))
 
 
+
         for name in self.professors[0].variables.variable_names:
             self.history[f"prof_{name}"].append(self.safe_avg([getattr(s.variables, name) for s in self.professors]))
 
@@ -260,14 +268,23 @@ class World:
     
 
     def save_data(self, name):
-        with open(f"../data/{name}.json", "w") as file:
+        with open(f"/Users/keshava/Documents/micro-economy-simulator/data/{name}.json", "w") as file:
             json.dump(self.history, file, indent=4)
 
     def load_data(self, name):
-        with open(f'../data/{name}.json', 'r') as file:
+        with open(f'/Users/keshava/Documents/micro-economy-simulator/data/{name}', 'r') as file:
             self.history = json.load(file)
 
-    # ----------------------------  
+        self.timestep = self.history["timestep"][-1]
+        # st.session_state["class_time"] = self.history["policy"]["class_time"]
+        # st.session_state["break_frequency"] = self.history["policy"]["break_frequency"]
+        # st.session_state["exam_frequency"] = self.history["policy"]["exam_frequency"]
+        # st.rerun()
+
+        self.env.campus_energy = self.history["campus_energy"][-1]
+        self.env.average_policy_satisfaction = self.history["average_policy_satisfaction"][-1]
+        self.env.ambient_stress_level = self.history["ambient_stress_level"][-1]
+        self.env.institution_reputation = self.history["institution_reputation"][-1]
     # Streamlit accessors
     # ----------------------------
     def get_history(self):
@@ -275,7 +292,7 @@ class World:
         return self.history
     
     def get_actors_of_type(self, name):
-        name = name.lower()
+        name = name.lower() + 's'
         return getattr(self, name)
 
     def get_grouped_history(self):

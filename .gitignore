@@ -1,0 +1,10 @@
+# Ignore environment variable files
+.env
+*.env
+.env.*
+.envrc
+
+# If you use python-dotenv optional patterns
+.env.local
+.env.development
+.env.production

@@ -7,11 +7,13 @@ load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
 
-if not api_key:
+if not api_key: 
     print("Error: GEMINI_API_KEY not set in environment.")
     exit()
 
 
+
+# api_key = "AIzaSyBOnmWwNt9Sa5qKOxu0IBJSii_onNJowa0"
 system_prompt = "you are providing a reward model here. in the input, i will give a policy change taken. " \
 "i will give the specific action taken, and the state variables i want to see change in and their initial values." \
 "you will then return, in your opinion, how you think those state variables wille be affected NUMERICALLY" \
@@ -46,7 +48,7 @@ system_prompt_actor = "you are providing both the policy and reward model here. 
 "your decision. The prompt will come in the form of variable1: value, variable2:value, variable3:value" \
 "You will return the prompt in the EXACT format of actor number, action, variable1:value, variable2:value, ....; actor number, action, " \
 "make sure it is in that EXACT format. actor number, action, variable:value... ; actor number, action and so on. do not add " \
-"any new line characters." \
+"any new line characters. or spaces. make sure you return one row for one actor, and exactly the amount of actors for each actor type." \
 "for each actor"
 
 info = (
@@ -56,7 +58,7 @@ info = (
 
     "Student State Variables: "
     "performance, happiness, fatigue, motivation, attendance_rate, "
-    "social_engagement, extracurriculur_engagement | "
+    "social_engagement, extracurricular_engagement | "
     "Student Actions: attend_class, study_extra, rest, socialize, seek_help, "
     "skip_day, attend_extracurricular | "
 
@@ -102,7 +104,6 @@ client = genai.Client(api_key=api_key)
 # manually format links and filter them out
 # filter out the input structure
 
-# print(response.text)
 
 def change_variables(query, variables, object_to_update):
     # format variables
@@ -121,7 +122,7 @@ def change_variables(query, variables, object_to_update):
     ans = response.text.split(', ')
     ans = [a.split(': ') for a in ans]
     ans_d = {a[0]:float(a[1]) for a in ans}
-    print(ans_d,"ans")
+
 
     for key in ans_d:
         try:
@@ -146,41 +147,36 @@ def action_and_change(query, variables, actor_variables, objects):
     )
 
 
-    print(response.text, "action response")
-    ans = response.text.split('; ')
-    # print(ans, ans[0], ans[0].split(', '))
+    ans = response.text.strip().split(';')
     ans2 = []
     for x in ans:
         try:
-            ans2.append(x.split(', '))
+            ans2.append(x.split(','))
         except:
-            print(x, "error")
+            pass
     actor_nums = [x[0] for x in ans2]
     actions = [x[1] for x in ans2]
 
-    print("\n\n\n\n")
-    # print(ans2[0])
+
     vars = []
     for i, x in enumerate(ans2):
         vars.append([])
         for y in x[2:]:
             try:
-                vars[i].append(y.split(': '))
+                vars[i].append(y.split(':'))
             except:
-                print(y, "error 2")
+                pass
 
     vars2 = []
     for i, x in enumerate(vars):
         vars2.append({})
         for var in x:
-            print(var)
             if len(var) == 1:
                 var = var[0].split(':')
             
             vars2[i][var[0]] = float(var[1])
     for i in range(len(actor_nums)):
         actor = objects[i]
-        print(vars2[i])
         actor.take_action(actions[i], vars2[i])
 
 
