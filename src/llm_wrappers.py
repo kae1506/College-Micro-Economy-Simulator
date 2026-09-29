@@ -6,7 +6,21 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-api_key = os.getenv("GEMINI_API_KEY")
+
+def _load_api_key():
+    api_key = os.getenv("GEMINI_API_KEY")
+    if api_key:
+        return api_key
+
+    try:
+        import streamlit as st
+
+        return st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        return None
+
+
+api_key = _load_api_key()
 
 
 
