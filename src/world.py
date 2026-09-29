@@ -5,6 +5,7 @@ from src.actors.clubs import Club
 from src.actors.administration import Admin
 
 import json
+from pathlib import Path
 from src.llm_wrappers import change_variables, action_and_change
 import streamlit as st
 
@@ -123,7 +124,11 @@ class World:
     
 
     def get_most_common_action(self, key):
-        return self.history["dominant_actions"][key]
+        actors = getattr(self, key, [])
+        actions = [actor.latest_action for actor in actors if actor.latest_action != "None"]
+        if not actions:
+            return "—"
+        return max(set(actions), key=actions.count)
     
 
     def package_variables(self, glob=True, actor=True):
@@ -215,9 +220,6 @@ class World:
         query += ' , to: '
         for key in policy_updates:
             query+=f'{key}: {policy_updates[key]}'
-        self.timestep += 1
-
-
         ########## FLOW OF STEP: ############
         # FIRST THE VARIABLES ARE AVERAGED AND PACKAGED AND SENT TO UPDATE GLOBAL VARIABLES
         # THEN WITH UPDATED GLOBAL VARIABLES (AND MAYBE AVERAGES OF ALL) ACTORS MAKE ACTIONS
@@ -229,16 +231,18 @@ class World:
         overlay = show_loading_overlay()
 
 
-        # 2. get updated global variables and update (done in func)
-        changed = change_variables(query, student_data, self.env)
+        try:
+            # 2. get updated global variables and update (done in func)
+            change_variables(query, student_data, self.env)
 
-        # 3. have actors take decision based on global actions and update values
-        global_changed = self.package_variables(actor=False)
-        current_actors = self.current_actors_variables(avg=False)
-        action_and_change(query, global_changed, current_actors, self.actors)
+            # 3. have actors take decisions based on the updated global state
+            global_changed = self.package_variables(actor=False)
+            current_actors = self.current_actors_variables(avg=False)
+            action_and_change(query, global_changed, current_actors, self.actors)
+        finally:
+            overlay.empty()
 
-
-        overlay.empty()
+        self.timestep += 1
 
 
 
@@ -268,11 +272,14 @@ class World:
     
 
     def save_data(self, name):
-        with open(f"/Users/keshava/Documents/micro-economy-simulator/data/{name}.json", "w") as file:
+        data_dir = Path(__file__).resolve().parent.parent / "data"
+        data_dir.mkdir(exist_ok=True)
+        with (data_dir / f"{name}.json").open("w") as file:
             json.dump(self.history, file, indent=4)
 
     def load_data(self, name):
-        with open(f'/Users/keshava/Documents/micro-economy-simulator/data/{name}', 'r') as file:
+        data_path = Path(__file__).resolve().parent.parent / "data" / Path(name).name
+        with data_path.open("r") as file:
             self.history = json.load(file)
 
         self.timestep = self.history["timestep"][-1]

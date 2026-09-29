@@ -1,19 +1,15 @@
 from google import genai
 from google.genai import types
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 api_key = os.getenv("GEMINI_API_KEY")
 
-if not api_key: 
-    print("Error: GEMINI_API_KEY not set in environment.")
-    exit()
 
 
-
-# api_key = "AIzaSyBOnmWwNt9Sa5qKOxu0IBJSii_onNJowa0"
 system_prompt = "you are providing a reward model here. in the input, i will give a policy change taken. " \
 "i will give the specific action taken, and the state variables i want to see change in and their initial values." \
 "you will then return, in your opinion, how you think those state variables wille be affected NUMERICALLY" \
@@ -89,7 +85,16 @@ system_prompt_actor += info
 # and also the average of maybe each variable for each actor. 
 # let us try solely for student
 
-client = genai.Client(api_key=api_key)
+client = genai.Client(api_key=api_key) if api_key else None
+
+
+def _require_client():
+    if client is None:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured. Add it to the deployment secrets "
+            "before running a simulation step."
+        )
+    return client
 # response = client.models.generate_content(
 #     model="gemini-2.5-flash",
 #     contents="in a college, all classes are now pushed from 9AM to 10AM in the morning. state variables are: " \
@@ -110,7 +115,7 @@ def change_variables(query, variables, object_to_update):
     # 
 
 
-    response = client.models.generate_content(
+    response = _require_client().models.generate_content(
         model="gemini-2.5-flash",
         contents=query+variables,
         config=types.GenerateContentConfig(
@@ -137,7 +142,7 @@ def action_and_change(query, variables, actor_variables, objects):
 
     # TODO: add current variables for each actor, and possible actions
 
-    response = client.models.generate_content(
+    response = _require_client().models.generate_content(
         model="gemini-2.5-flash",
         contents=query+' '+variables+' '+actor_variables,
         config=types.GenerateContentConfig(
@@ -189,5 +194,3 @@ def action_and_change(query, variables, actor_variables, objects):
 
 # # design a metric to understand change in environment variable 
 # and have it 
-
-

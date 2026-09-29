@@ -4,7 +4,7 @@ import time
 import os
 
 
-DATA_DIR = "/Users/keshava/Documents/micro-economy-simulator/data"  # same path you used
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
 
 
 def render_simulation_controls(world, policy_updates):
@@ -37,17 +37,25 @@ def render_simulation_controls(world, policy_updates):
     # --- Actions ---
 
     if run_1:
-        world.step(policy_updates)
-        st.session_state.world = world
-        st.toast("Ran 1 step ✅")
-        st.rerun()
+        try:
+            world.step(policy_updates)
+        except Exception as exc:
+            st.error(f"Could not run the simulation: {exc}")
+        else:
+            st.session_state.world = world
+            st.toast("Ran 1 step ✅")
+            st.rerun()
 
     if run_10:
-        for _ in range(5):
-            world.step(policy_updates)
-            st.session_state.world = world
-        st.toast("Ran 5 steps ✅")
-        st.rerun()
+        try:
+            for _ in range(5):
+                world.step(policy_updates)
+                st.session_state.world = world
+        except Exception as exc:
+            st.error(f"Could not run the simulation: {exc}")
+        else:
+            st.toast("Ran 5 steps ✅")
+            st.rerun()
 
     if reset:
         from src.world import World  # same backend class
